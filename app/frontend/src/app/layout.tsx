@@ -5,6 +5,13 @@ import localFont from 'next/font/local'
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar" /*Importinh avatar from shadcn */
 import Footerwave from "/public/Footer_Wave.svg"; /*Imporrting the wave svg */
+import Logo from "/public/Academy-X-bg removed.svg";
+import Search from "/public/Search-icon.svg";
+import { Button } from "@/components/ui/button"
+import GitHubLogo from "/public/icons8-github.svg";
+import LinkedinLogo from "/public/icons8-linkedin.svg";
+import MailLogo from "/public/icons8-mail-48.svg";
+import WebsiteLogo from "/public/icons8-website-50.svg"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,51 +28,72 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body >
-        <main >{/*Virgil is the font used for the academy x logo */}
-        <header className="w-screen h-1/6 flex justify-between items-center border-academy bg-black  border-2 rounded-b-sm border-t-0">
-          <div className=" p-2">{/*This div will have the hamburger menu, which i have yet not worked on */}
+      <body className=" bg-slate-400">
 
+        <header className="w-screen  h-1/6 flex   justify-around items-center border-academy bg-black  bg-opacity-0  border-4 rounded-b-sm border-t-0">
+          
+          
+          
+          <div className="    flex-shrink h-12 w-12 "> 
           </div>
-          <a href="https://github.com/acmpesuecc/AcademyX">
-          <Image
-              src="/academyX-removebg-preview.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={50}
-              priority
-            />
+
+
+          <div className="  flex-shrink">
+            <a href="https://github.com/acmpesuecc/AcademyX">
+            <Image src={Logo} alt="Logo" className="m-4"/>
+                
             </a>
-          <div className=" p-2">{/*This div has the avatar properties */}
+          </div>
+
+      <div className="flex justify-start  items-start">
+          <div className=" w-10 h-10"> <button ><Image src={Search} alt="Search icon"/></button></div>
+          <div className=" " >
             <Avatar>
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
           </div>
+          </div>
+
+
+
+
         </header>
-        </main>
+
+
+
+
+
+
         {children}
+        
         <footer className="bottom-0 relative w-screen">
           <div className="flex justify-start relative z-0">
           <Image src={Footerwave} alt="Footerbg" className="w-screen"/>
-          <div className=" absolute bottom-0 z-10 w-screen h-3/5 ">
-            {/*footer contet goes in this div, idk what to write here*/}
-            <p className="px-2"><strong>AcademyX</strong> <br /> Webstie created by ACM PESU ECC <br />-this website is open source</p>
-          <h1 className="px-2">Contact us: <br /></h1>
-          <div className="flex justify-start items-center w-1/6 p-2">
-          <a target="_blank" href="https://github.com/acmpesuecc/AcademyX/">
-          <img src="https://skillicons.dev/icons?i=github" /></a>
-          <a href="https://skillicons.dev">
-          <img src="https://skillicons.dev/icons?i=gmail" /></a>
-          <a href="https://skillicons.dev">
-          <img src="https://skillicons.dev/icons?i=linkedin" /></a>
-          </div> 
-            <p className="tet-2xl absolute bottom-10 right-10">&copy; ACMPESUECC</p>
-          </div>
+          <div className="  flex flex-row  justify-items-end justify-between items-end  absolute bottom-0 z-10 w-screen h-3/5 ">
+
+          <div className="w-fit h-fit"><p className="px-2">Webstie created by ACM PESU ECC <br />-this website is open source</p></div>
+
+          <div className=" flex-shrink self-center">
+            <a href="https://github.com/acmpesuecc/AcademyX">
+            <Image src={Logo} alt="Logo" className="m-4"/>
+                
+            </a>
           </div>
           
-        </footer>
+            <div className=" z-20 text-xl  h-fit w-fit">
+              <div className="  flex flex-row w-fit h-fit items-end justify-between">
+                <Button variant="ghost" size="icon" className=" m-0.5"><a href="https://github.com/acmpesuecc/AcademyX" target="blank"><Image src={GitHubLogo} alt="Academy X Github"></Image></a></Button>
+                <Button variant="ghost" size="icon" className=" m-0.5"><a href="https://github.com/acmpesuecc/AcademyX " target="blank" ><Image src={MailLogo} alt="ACM Mail"></Image></a></Button>
+                <Button variant="ghost" size="icon" className=" m-0.5"><a href="https://www.linkedin.com/company/acm-pesu-ecc/" target="blank" ><Image src={LinkedinLogo} alt="ACM Linkedin"></Image></a></Button>
+                <Button variant="ghost" size="icon" className=" m-0.5"><a href="https://acmpesuecc.github.io/index.html" target="blank" ><Image src={WebsiteLogo} alt="ACM Website"></Image></a></Button>
+              </div>
+              <p className=" text-center">&copy; ACMPESUECC</p>
+              </div>
+            </div>
+          </div>
+          
+  </footer>
         
         </body>
     </html>
