@@ -1,61 +1,168 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
-import apple from '@/components/icons/icons8-apple 1.png'
-import google from '@/components/icons/icons8-google 1.png'
-import github from '@/components/icons/Github.png'
+'use client';  // Add the "use client" directive
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";  // Import from next/navigation instead of next/router
+import Image from "next/image";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import image from "@/components/icons/Learn Programming 1.png";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { CheckCircle } from "lucide-react";
 
 export default function SignUp() {
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const router = useRouter();  // Use the client-side router from next/navigation
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+
+      // Placeholder for saving 'isTeacher' status to your database
+      // Example: saveUserToDatabase(userCredential.user.uid, { isTeacher });
+
+      setIsSuccess(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to create an account. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        router.push("/dashboard");  // Using the client-side router
+      }, 2000);
+    }
+  }, [isSuccess, router]);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow flex items-center justify-center bg-gray-50">
+      <main className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-4xl flex">
-          <div className="w-1/2 bg-gray-200 rounded-l-lg hidden md:block">
+          <div className="w-1/2 rounded-r-lg hidden md:block">
             <div className="h-full flex items-center justify-center">
-              <span className="text-gray-500">Image placeholder</span>
+              <span className="text-gray-500">
+                <Image src={image} alt="Learn Programming" />
+              </span>
             </div>
           </div>
-          <div className="w-full md:w-1/2 bg-white p-8 rounded-lg md:rounded-l-none md:rounded-r-lg">
-            <h2 className="text-2xl font-bold mb-6">SIGNUP AND START LEARNING</h2>
-            <form className="space-y-4">
-              <Input type="text" placeholder="UserName" />
-              <Input type="email" placeholder="Email" />
-              <Input type="password" placeholder="Password" />
-              <div className="flex items-center">
-                <Checkbox id="remember" />
-                <label htmlFor="remember" className="ml-2 text-sm text-gray-600">
-                  Remember me
-                </label>
-              </div>
-              <Button className="w-full bg-black text-white hover:bg-gray-800">
-                Sign Up
-              </Button>
-            </form>
-            <div className="mt-6 flex justify-center space-x-4">
-              <Link href="/auth/github">
-                <Image src={github} alt="GitHub" width={24} height={24} />
-              </Link>
-              <Link href="/auth/google">
-                <Image src={google} alt="Google" width={24} height={24} />
-              </Link>
-              <Link href="/auth/apple">
-                <Image src={apple} alt="Apple" width={24} height={24} />
-              </Link>
-            </div>
-            <div className="mt-6 text-center">
-              <Link href="/login" className="text-sm text-gray-600 hover:underline">
-                Already have an account?
-              </Link>
-            </div>
-          </div>
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center">Sign up for AcademyX</CardTitle>
+              <CardDescription className="text-center">Create your account to get started</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isSuccess ? (
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <CheckCircle className="w-16 h-16 text-green-500 animate-pulse" />
+                  <p className="text-lg font-semibold text-green-600">Successfully signed up!</p>
+                  <p>Redirecting to dashboard...</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      type="text"
+                      required
+                      className="mt-1"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email address</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      className="mt-1"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                      className="mt-1"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Input
+                      id="confirm-password"
+                      name="confirm-password"
+                      type="password"
+                      required
+                      className="mt-1"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="teacher"
+                      checked={isTeacher}
+                      onCheckedChange={(checked) => setIsTeacher(checked as boolean)}
+                    />
+                    <Label htmlFor="teacher">Sign up as a teacher</Label>
+                  </div>
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Signing up..." : "Sign up"}
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{" "}
+                <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+                  Log in
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
         </div>
       </main>
       <Footer />
     </div>
-  )
+  );
 }

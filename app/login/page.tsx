@@ -15,12 +15,7 @@ export default function Login() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-4xl flex">
-          <div className="w-1/2 bg-gray-200 rounded-r-lg hidden md:block">
-            <div className="h-full flex items-center justify-center">
-              <span className="text-gray-500">Image placeholder</span>
-            </div>
-          </div>
+      <div className="w-full max-w-4xl flex">
           <div className="w-full md:w-1/2 bg-white p-8 rounded-lg md:rounded-r-none md:rounded-l-lg">
             <h2 className="text-2xl font-bold mb-6">WELCOME BACK</h2>
             <p className="text-gray-600 mb-6">PLEASE ENTER YOUR DETAILS</p>
@@ -57,6 +52,11 @@ export default function Login() {
               <Link href="/signup" className="text-sm text-gray-600 hover:underline">
                 {"Don't have an account?"}
               </Link>
+            </div>
+          </div>
+          <div className="w-1/2 bg-gray-200 rounded-r-lg hidden md:block">
+            <div className="h-full flex items-center justify-center">
+              <span className="text-gray-500">Image placeholder</span>
             </div>
           </div>
         </div>
