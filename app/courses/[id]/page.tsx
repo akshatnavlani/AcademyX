@@ -28,7 +28,7 @@ const courseData = {
         {
           title: 'Introduction',
           description: 'Topic description',
-          videoUrl: 'https://example.com/video1.mp4',
+          videoUrl: 'https://www.youtube.com/watch?v=lQftwBTCejE&t=870s',
           videoThumbnail: '/placeholder.svg?height=200&width=400'
         },
         {

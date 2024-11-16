@@ -13,8 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, GithubAuthProvider, signInWithPopup } from "firebase/auth";
 import { CheckCircle } from "lucide-react";
+import google from "@/components/icons/icons8-google 1.png";  // Import Google icon
+import github from "@/components/icons/Github.png";  // Import GitHub icon
 
 export default function SignUp() {
   const [isTeacher, setIsTeacher] = useState(false);
@@ -51,6 +53,32 @@ export default function SignUp() {
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle Google SignUp
+  const handleGoogleSignup = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      await updateProfile(user, { displayName: user.displayName });
+      setIsSuccess(true);
+    } catch (err: any) {
+      setError(err.message || "Google sign-up failed.");
+    }
+  };
+
+  // Handle GitHub SignUp
+  const handleGithubSignup = async () => {
+    const provider = new GithubAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      await updateProfile(user, { displayName: user.displayName });
+      setIsSuccess(true);
+    } catch (err: any) {
+      setError(err.message || "GitHub sign-up failed.");
     }
   };
 
@@ -151,7 +179,28 @@ export default function SignUp() {
                 </form>
               )}
             </CardContent>
-            <CardFooter className="flex justify-center">
+
+            {/* Social login buttons */}
+            <div className="flex justify-between p-4">
+              <Button
+                type="button"
+                onClick={handleGoogleSignup}
+                className="w-full flex items-center justify-center bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-100"
+              >
+                <Image src={google} alt="Google" width={24} height={24} />
+                <span className="ml-2 text-black">Sign up with Google</span>
+              </Button>
+              <Button
+                type="button"
+                onClick={handleGithubSignup}
+                className="w-full flex items-center justify-center bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-100"
+              >
+                <Image src={github} alt="GitHub" width={24} height={24} />
+                <span className="ml-2 text-black">Sign up with GitHub</span>
+              </Button>
+            </div>
+
+            <CardFooter className="flex justify-center paddin p-1">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link href="/login" className="font-medium text-primary hover:text-primary/80">

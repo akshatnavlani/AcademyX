@@ -1,20 +1,20 @@
 "use client"
 
 import { useState } from 'react'
-import { Header } from '@/components/header'
+import { Header } from '@/components/header-loggedin'
 import { Footer } from '@/components/footer'
 import { CourseCard } from '@/components/course-card'
-// import { Achievements } from '@/components/achievements'
+import { Achievements } from '@/components/achievements'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ShoppingCart, Bell, Search, User, BookOpen, Upload } from 'lucide-react'
+import {Upload } from 'lucide-react'
 import Link from 'next/link'
 
 export default function Dashboard() {
   const [user, setUser] = useState({
     name: "John Doe",
     level: "High Schooler",
-    learnerPoints: 500,
+    // learnerPoints: 500,
     achievements: ["Course Creator", "Fast Learner", "Top Contributor"],
     accountType: "teacher" // or "student"
   })
@@ -75,33 +75,16 @@ export default function Dashboard() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex justify-between items-start mb-8">
           <h1 className="text-3xl font-bold">Welcome back, {user.name}!</h1>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <User className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              <span className="font-semibold">{user.learnerPoints}</span>
-            </div>
-          </div>
+          
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <div className="md:col-span-2">
-            {/* <Achievements 
+            <Achievements 
               achievements={user.achievements}
               level={user.level}
-              learnerPoints={user.learnerPoints}
-            /> */}
+              
+            />
           </div>
           {user.accountType === "teacher" && (
             <div>

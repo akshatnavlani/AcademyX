@@ -1,3 +1,4 @@
+'use client'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
@@ -5,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle } from 'lucide-react'
 import { BrowserFrame } from '@/components/browser-frame'
 import Link from 'next/link'
-import { withAuth } from '@/components/with-auth';
+// import { withAuth } from '@/components/with-auth';
 
 const Dashboard = () => {
   return (
@@ -96,4 +97,4 @@ const Dashboard = () => {
   )
 }
 
-export default withAuth(Dashboard);
+export default Dashboard;
