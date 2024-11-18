@@ -7,34 +7,40 @@ const router = express.Router();
 // GET route to fetch the logged-in user's details (protected route)
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId); // Access user ID from the token payload
+    // Fetch user details using the authenticated user ID
+    const user = await User.findById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Calculate the percentage of courses completed based on the number of videos watched
-    const coursesProgress = await Promise.all(user.courses_bought.map(async (courseProgress) => {
-      const course = await Course.findById(courseProgress.course_id);
+    // Calculate course progress and fetch course details
+    const coursesProgress = await Promise.all(
+      user.courses_bought.map(async (courseProgress) => {
+        try {
+          const course = await Course.findById(courseProgress.course_id);
 
-      if (!course) {
-        return null;
-      }
+          if (!course) {
+            console.warn(`Course with ID ${courseProgress.course_id} not found`);
+            return null; // Exclude non-existent courses
+          }
 
-      const totalVideos = course.number_of_videos;
-      const videosWatched = courseProgress.number_of_videos_watched;
+          const totalVideos = course.number_of_videos || 1; // Avoid division by zero
+          const videosWatched = courseProgress.number_of_videos_watched || 0;
+          const percentageCompleted = Math.round((videosWatched / totalVideos) * 100);
 
-      // Calculate percentage completion
-      const percentageCompleted = (videosWatched / totalVideos) * 100;
+          return {
+            course_id: course._id,
+            percentage_completed: percentageCompleted,
+            course_title: course.title,
+          };
+        } catch (error) {
+          console.error(`Error processing course ID ${courseProgress.course_id}:`, error);
+          return null; // Exclude problematic courses
+        }
+      })
+    );
 
-      return {
-        ...courseProgress._doc,
-        percentage_completed: percentageCompleted,  // Add the calculated percentage
-        course_title: course.title,  // Include the course title
-      };
-    }));
-
-    // Return user data along with course progress
     res.json({
       username: user.username,
       mail: user.mail,
@@ -42,7 +48,7 @@ router.get("/", authMiddleware, async (req, res) => {
       learner_points: user.learner_points,
       level: user.level,
       achievements: user.achievements,
-      courses_bought: coursesProgress.filter(course => course !== null),  // Filter out null results
+      courses_bought: coursesProgress.filter(Boolean), // Remove null values
     });
   } catch (err) {
     console.error("Error fetching user data:", err);

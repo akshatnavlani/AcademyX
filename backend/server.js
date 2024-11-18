@@ -8,7 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const courseRoutes = require('./routes/courses');
-const meRoutes = require('./routes/me'); // Import the /me route
+const meRoutes = require('./routes/me');
 
 // Initialize the Express app
 const app = express();
@@ -25,10 +25,13 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch((err) => console.error('Error connecting to MongoDB:', err));
 
 // Register routes
-app.use('/api/auth', authRoutes); // Route for authentication (login)
-app.use('/api/users', userRoutes); // Route for user creation and other operations
-app.use('/api/courses', courseRoutes); // Route for courses
-app.use('/api/me', meRoutes); // Protected route for logged-in user details
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/me', meRoutes);
+
+// Fallback route for 404
+app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
 
 // Start the server
 const PORT = process.env.PORT || 5000;

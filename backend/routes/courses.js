@@ -3,10 +3,11 @@ const Course = require('../models/Course');
 const User = require('../models/User');
 const router = express.Router();
 
-// Get all courses
-router.get('/', async (req, res) => {
+// Get courses by IDs
+router.get('/:ids', async (req, res) => {
   try {
-    const courses = await Course.find();
+    const courseIds = req.params.ids.split(',');
+    const courses = await Course.find({ _id: { $in: courseIds } });
     res.json(courses);
   } catch (err) {
     console.error("Error fetching courses:", err);
