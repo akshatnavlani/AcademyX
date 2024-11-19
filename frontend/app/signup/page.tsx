@@ -1,8 +1,8 @@
 'use client';  // Add the "use client" directive
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";  // Import from next/navigation instead of next/router
-import Image from "next/image";
+import Image from "next/image"; 
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import image from "@/components/icons/Learn Programming 1.png";
@@ -48,7 +48,7 @@ export default function SignUp() {
       // Send data to backend to save user to MongoDB
       const userData = {
         username: name,
-        mail: email,
+        email: email,
         account_type: isTeacher ? "teacher" : "student",
         learner_points: 0,
         level: "Beginner",
@@ -90,8 +90,8 @@ export default function SignUp() {
       // Send user data to backend to save in MongoDB
       const userData = {
         username: user.displayName,
-        mail: user.email,
-        account_type: "student", // You can customize this based on user info
+        email: user.email,
+        account_type: isTeacher ? "teacher" : "student", // You can customize this based on user info
         learner_points: 0,
         level: "Beginner",
         achievements: [],
@@ -125,6 +125,29 @@ export default function SignUp() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       await updateProfile(user, { displayName: user.displayName });
+            // Send user data to backend to save in MongoDB
+            const userData = {
+              username: user.displayName,
+              email: user.email,
+              account_type: isTeacher ? "teacher" : "student", // You can customize this based on user info
+              learner_points: 0,
+              level: "Beginner",
+              achievements: [],
+              courses_bought: [],
+            };
+      const response = await fetch("http://localhost:5000/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+  
+      if (response.ok) {
+        setIsSuccess(true);
+      } else {
+        throw new Error("Failed to save user in the database.");
+      }
       setIsSuccess(true);
     } catch (err: any) {
       setError(err.message || "GitHub sign-up failed.");

@@ -6,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CheckCircle } from 'lucide-react'
 import { BrowserFrame } from '@/components/browser-frame'
 import Link from 'next/link'
-// import { withAuth } from '@/components/with-auth';
 
 const Dashboard = () => {
   return (

@@ -1,20 +1,20 @@
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Avatar } from "@/components/ui/avatar"
-import { Star } from "lucide-react"
-import Link from "next/link"
-
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Avatar } from "@/components/ui/avatar";
+import { Star } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 interface CourseCardProps {
-  id: string
-  title: string
-  thumbnail: string
-  tags: string[]
-  completion?: number
-  rating?: number
+  id: string;
+  title: string;
+  thumbnail: string;
+  tags: string[];
+  completion?: number; // optional completion percentage
+  rating?: number; // optional course rating
   instructor: {
-    name: string
-    avatar: string
-  }
+    name: string;
+    avatar: string;
+  };
 }
 
 export function CourseCard({
@@ -24,13 +24,13 @@ export function CourseCard({
   tags,
   completion,
   rating,
-  instructor
+  instructor,
 }: CourseCardProps) {
   return (
     <Link href={`/courses/${id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="aspect-video relative bg-muted">
-          <img
+          <Image
             src={thumbnail}
             alt={title}
             className="object-cover w-full h-full"
@@ -76,5 +76,5 @@ export function CourseCard({
         </CardFooter>
       </Card>
     </Link>
-  )
+  );
 }

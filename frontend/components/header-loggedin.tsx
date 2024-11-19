@@ -9,10 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ShoppingCart, Bell, Search, User, BookOpen, ChevronDown } from "lucide-react"; // Include BookOpen icon
-import { auth } from "@/lib/firebase"; // Firebase authentication import
-import { onAuthStateChanged } from "firebase/auth"; // Firebase auth function
-import Image from "next/image"; // Import Next.js Image component
+import { ShoppingCart, Bell, Search, User, BookOpen } from "lucide-react";
+import { auth } from "@/app/firebase/config";
+import { onAuthStateChanged, signOut} from "firebase/auth";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -24,51 +25,46 @@ interface User {
 }
 
 export function Header() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null); // To store the logged-in user's email
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Loading state to handle user data fetching
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Listen to Firebase auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        setUserEmail(firebaseUser.email); // Store email of logged-in user
+        setUserEmail(firebaseUser.email); // Store user email
       } else {
-        setUserEmail(null); // User is not logged in
+        setUserEmail(null);
+        setUser(null); // Clear user data on logout
       }
     });
 
-    return () => unsubscribe(); // Clean up listener
+    return () => unsubscribe();
   }, []);
 
+  // Fetch user data from the backend
   useEffect(() => {
     if (userEmail) {
       const fetchUserData = async () => {
-        setIsLoading(true); // Set loading state to true when fetching user data
+        setIsLoading(true);
         try {
-          const userResponse = await fetch(`${API_URL}/users/${userEmail}`);
-          const userData = await userResponse.json();
-
-          // If user data is not available (new user), create default values
-          if (!userData) {
-            setUser({
-              username: "New User", // Placeholder username for new users
-              avatar_url: "/default-avatar.png", // Default avatar image
-              learner_points: 0, // New users have 0 learner points by default
-              level: "Beginner", // Default level for new users
-            });
-          } else {
-            // Set the fetched user data
-            setUser({
-              username: userData.username,
-              avatar_url: userData.avatar_url,
-              learner_points: userData.learner_points || 0, // Default to 0 if no learner points are available
-              level: userData.level || "Beginner", // Default to "Beginner" if no level is available
-            });
+          const response = await fetch(`${API_URL}/api/courses/user/${userEmail}`);
+          if (!response.ok) {
+            throw new Error("Failed to fetch user data");
           }
+          const data = await response.json();
+          setUser({
+            username: data.username || "New User",
+            avatar_url: data.avatar_url || "/default-avatar.png",
+            learner_points: data.learner_points || 0,
+            level: data.level || "Beginner",
+          });
         } catch (error) {
           console.error("Error fetching user data:", error);
         } finally {
-          setIsLoading(false); // Set loading state to false after data is fetched
+          setIsLoading(false);
         }
       };
 
@@ -76,8 +72,18 @@ export function Header() {
     }
   }, [userEmail]);
 
+  // Handle logout functionality
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push("/main")
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   if (isLoading) {
-    return <p className="text-center py-8">Fetching your profile...</p>; // Show loading text while fetching data
+    return <p className="text-center py-8">Fetching your profile...</p>;
   }
 
   return (
@@ -104,7 +110,17 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
+                {user?.avatar_url ? (
+                  <Image
+                    src={user.avatar_url}
+                    alt="User Avatar"
+                    className="rounded-full"
+                    width={24}
+                    height={24}
+                  />
+                ) : (
+                  <User className="h-5 w-5" />
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -117,7 +133,7 @@ export function Header() {
               <DropdownMenuItem asChild>
                 <Link href="/settings">Settings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="flex items-center gap-2">

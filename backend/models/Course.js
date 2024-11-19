@@ -14,6 +14,7 @@ const chapterSchema = new mongoose.Schema({
 
 const courseSchema = new mongoose.Schema({
   title: String,
+  get_points: Number,
   instructor: {
     name: String,
     avatar: String,

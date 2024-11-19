@@ -20,7 +20,7 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 
 // Function to get the current user (returns a promise)
-export const getUser = (): Promise<User | null> => {
+const getUser = (): Promise<User | null> => {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, (user) => {
       resolve(user);  // Resolve with the user object or null if not logged in
@@ -28,4 +28,4 @@ export const getUser = (): Promise<User | null> => {
   });
 };
 
-export { app, auth };
+export { app, auth, getUser };

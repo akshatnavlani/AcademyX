@@ -1,25 +1,34 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Header } from '@/components/header-loggedin'
-import { Footer } from '@/components/footer'
-import { CourseCard } from '@/components/course-card'
-import { Achievements } from '@/components/achievements'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload } from 'lucide-react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react';
+import { Header } from '@/components/header-loggedin';
+import { Footer } from '@/components/footer';
+import { CourseCard } from '@/components/course-card';
+import { Achievements } from '@/components/achievements';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload } from 'lucide-react';
+import Link from 'next/link';
+import { auth } from '@/app/firebase/config'; // Assuming Firebase is set up
+const NEXT_URI = "http://localhost:5000/api/courses";
 
 interface User {
-  name: string;
+  username: string;
+  email: string;
   level: string;
   achievements: string[];
-  accountType: string;
-  coursesBought: { course_id: string, percentage_completed: number, number_of_videos_watched: number, course_title: string }[];
+  account_type: string;
+  learner_points: number;
+  courses_bought: {
+    course_id: string;
+    percentage_completed: number;
+    number_of_videos_watched: number;
+    course_title: string;
+  }[];
 }
 
 interface Course {
-  id: string;
+  _id: string;
   title: string;
   thumbnail: string;
   tags: string[];
@@ -27,55 +36,98 @@ interface Course {
     name: string;
     avatar: string;
   };
-  completion: number;
+  number_of_videos: number;
 }
 
 export default function Dashboard() {
-  const [user, setUser] = useState<User | null>(null)
-  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([])
-  const [createdCourses, setCreatedCourses] = useState<Course[]>([])
+  const [user, setUser] = useState<User | null>(null);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
+  const [createdCourses, setCreatedCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // Track errors
 
-  const fetchUserData = async () => {
+  const fetchUserData = async (email: string): Promise<void> => {
     try {
-      const response = await fetch('/api/me'); // Fetch logged-in user data from backend
-      const data = await response.json();
+      setError(null); // Reset previous errors
+      const response = await fetch(`${NEXT_URI}/user/${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+
+      const data: User = await response.json();
       setUser(data);
 
-      // Get the enrolled courses for the user
-      const enrolledResponse = await fetch(`/api/courses/${data.coursesBought.map(course => course.course_id).join(',')}`);
-      const enrolledData = await enrolledResponse.json();
-      setEnrolledCourses(enrolledData);
+      // Fetch enrolled courses if user has bought any
+      if (data.courses_bought && data.courses_bought.length > 0) {
+        const courseIds = data.courses_bought.map((course) => course.course_id).join(',');
+        const enrolledResponse = await fetch(`${NEXT_URI}/${courseIds}`);
 
-      // Get the created courses for the teacher
-      if (data.accountType === 'teacher') {
-        const createdResponse = await fetch('/api/courses/created');
+        if (!enrolledResponse.ok) {
+          throw new Error('Failed to fetch enrolled courses');
+        }
+
+        const enrolledData: Course[] = await enrolledResponse.json();
+        setEnrolledCourses(enrolledData);
+      }
+
+      // Fetch created courses for teachers
+      if (data.account_type === 'teacher') {
+        const createdResponse = await fetch(`${NEXT_URI}/created`);
         const createdData = await createdResponse.json();
-        setCreatedCourses(createdData);
+
+        if (createdResponse.ok && Array.isArray(createdData.created_courses)) {
+          setCreatedCourses(createdData.created_courses);
+        } else {
+          // If no courses are created, set the state to an empty array
+          setCreatedCourses([]);
+        }
       }
     } catch (error) {
-      console.error("Error fetching user data", error);
+      console.error('Error fetching user data:', error);
+      setError(error.message); // Set the error message
     }
-  }
+  };
 
   useEffect(() => {
-    fetchUserData();
-  }, [])
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      console.log(currentUser); // Check the logged-in user
 
-  if (!user) return <div>Loading...</div>;
+      if (currentUser) {
+        const email = currentUser.email;
+        if (email) {
+          fetchUserData(email);
+        }
+      }
+      setLoading(false); // Set loading to false once the auth state is resolved
+    });
+
+    // Cleanup the listener when the component is unmounted
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) return <div>Loading...</div>; // Show loading until Firebase Auth state is ready
+  if (error) return <div>{`Error: ${error}`}</div>; // Display the error message if any
+  if (!user) return <div>No user found</div>;
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="flex justify-between items-start mb-8">
-          <h1 className="text-3xl font-bold">Welcome back, {user.name}!</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {user.username}!</h1>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <div className="md:col-span-2">
             <Achievements achievements={user.achievements} level={user.level} />
           </div>
-          {user.accountType === "teacher" && (
+          {user.account_type === 'teacher' && (
             <div>
               <Button className="w-full" asChild>
                 <Link href="/create-course">
@@ -89,7 +141,7 @@ export default function Dashboard() {
         <Tabs defaultValue="learning" className="mb-12">
           <TabsList>
             <TabsTrigger value="learning">Your Learning</TabsTrigger>
-            {user.accountType === "teacher" && (
+            {user.account_type === 'teacher' && (
               <TabsTrigger value="teaching">Your Teaching</TabsTrigger>
             )}
           </TabsList>
@@ -97,18 +149,38 @@ export default function Dashboard() {
             <h2 className="text-2xl font-bold mb-6">Continue Your Learning Journey</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {enrolledCourses.map((course) => (
-                <CourseCard key={course.id} {...course} />
+                <CourseCard
+                  key={course._id}
+                  id={course._id}
+                  title={course.title}
+                  thumbnail={course.thumbnail}
+                  tags={course.tags}
+                  instructor={course.instructor}
+                  completion={course.number_of_videos ? course.number_of_videos * 100 : 0}
+                />
               ))}
             </div>
           </TabsContent>
-          {user.accountType === "teacher" && (
+          {user.account_type === 'teacher' && (
             <TabsContent value="teaching">
               <h2 className="text-2xl font-bold mb-6">Manage Your Courses</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {createdCourses.map((course) => (
-                  <CourseCard key={course.id} {...course} />
-                ))}
-              </div>
+              {createdCourses.length === 0 ? (
+                <p>No courses created yet. Start by creating your first course!</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {createdCourses.map((course) => (
+                    <CourseCard
+                      key={course._id}
+                      id={course._id}
+                      title={course.title}
+                      thumbnail={course.thumbnail}
+                      tags={course.tags}
+                      instructor={course.instructor}
+                      completion={course.number_of_videos ? course.number_of_videos * 100 : 0}
+                    />
+                  ))}
+                </div>
+              )}
             </TabsContent>
           )}
         </Tabs>
@@ -117,12 +189,20 @@ export default function Dashboard() {
           <h2 className="text-2xl font-bold mb-6">Recommended Courses</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {enrolledCourses.map((course) => (
-              <CourseCard key={course.id} {...course} />
+              <CourseCard
+                key={course._id}
+                id={course._id}
+                title={course.title}
+                thumbnail={course.thumbnail}
+                tags={course.tags}
+                instructor={course.instructor}
+                completion={course.number_of_videos ? course.number_of_videos * 100 : 0}
+              />
             ))}
           </div>
         </section>
       </main>
       <Footer />
     </div>
-  )
+  );
 }

@@ -8,7 +8,7 @@ const courseProgressSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema({
   username: String,
-  mail: String,
+  email: String ,
   account_type: { type: String, enum: ['teacher', 'student'], required: true },  // Updated field for account type
   learner_points: Number,
   level: String,

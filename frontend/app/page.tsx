@@ -21,7 +21,7 @@ const HomePage = () => {
     checkAuth();
   }, [router]);
 
-  return <div>Loading...</div>; // Optionally show a loading state while checking authentication
+  // return <div>Loading...</div>; // Optionally show a loading state while checking authentication
 };
 
 export default HomePage;
