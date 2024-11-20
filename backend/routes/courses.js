@@ -3,11 +3,14 @@ const router = express.Router();
 const User = require('../models/User');
 const Course = require('../models/Course');
 const { body, validationResult } = require('express-validator');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
 // Middleware to fetch user details by email
 const getUserMiddleware = async (req, res, next) => {
   const { email } = req.params;
   if (!email) {
+    console.log("no mail")
     return res.status(400).json({ message: "Email is required" });
   }
 
@@ -98,54 +101,66 @@ router.get('/user/:email', getUserMiddleware, async (req, res) => {
   }
 });
 
-// Route to create a new course
-router.post('/create', [
-  body('title').notEmpty().withMessage('Course title is required'),
-  body('description').notEmpty().withMessage('Course description is required'),
-  body('instructor.name').notEmpty().withMessage('Instructor name is required'),
-], getUserMiddleware, async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+router.post(
+  '/create',
+  upload.single('thumbnail'),
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('title').notEmpty().withMessage('Course title is required'),
+    body('description').notEmpty().withMessage('Course description is required'),
+    body('get_points').isInt({ min: 0 }).withMessage('Points must be a non-negative integer'),
+    body('chapters').isArray().withMessage('Chapters must be an array'),
+  ],
+  async (req, res) => {
+    console.log('Received request to create course...');
 
-  try {
-    const { title, description, instructor, tags, number_of_videos, thumbnail } = req.body;
-    const user = req.user;
-
-    // Check if the user exists and is a teacher
-    if (user.account_type !== 'teacher') {
-      return res.status(403).json({ message: "You are not authorized to create a course" });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors found:', errors.array());
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    // Create the new course
-    const newCourse = new Course({
-      title,
-      description,
-      instructor: {
-        name: instructor.name,
-        avatar: instructor.avatar || '',
-      },
-      tags: tags || [],
-      number_of_videos: number_of_videos || 0,
-      thumbnail: thumbnail || '',
-      created_at: new Date(),
-    });
+    try {
+      const { email, title, description, get_points, tags, number_of_videos, chapters, thumbnail } = req.body;
 
-    // Save the new course to the database
-    const savedCourse = await newCourse.save();
+      const user = await User.findOne({ email });
+      if (!user || user.account_type !== 'teacher') {
+        console.log("User not found or invalid account type");
+        return res.status(403).json({ message: 'Only teachers can create courses' });
+      }
 
-    // Respond with the created course details
-    res.status(201).json({
-      message: "Course created successfully",
-      course: savedCourse
-    });
+      const normalizedChapters = chapters.map((chapter) => ({
+        ...chapter,
+        topics: chapter.topics.map((topic) => ({
+          ...topic,
+          videoThumbnail: topic.videoThumbnail || '',
+        })),
+      }));
 
-  } catch (err) {
-    console.error("Error creating course:", err.message);
-    res.status(500).json({ message: "Failed to create course" });
+      const newCourse = new Course({
+        title,
+        description,
+        get_points: parseInt(get_points, 10),
+        instructor: { name: user.username, avatar: user.avatar || '' },
+        tags,
+        number_of_videos: parseInt(number_of_videos, 10),
+        thumbnail,
+        chapters: normalizedChapters,
+      });
+
+      const savedCourse = await newCourse.save();
+      res.status(201).json({ message: 'Course created successfully', course: savedCourse });
+    } catch (err) {
+      console.error('Error during course creation:', err.message);
+      res.status(500).json({ message: 'Failed to create course', error: err.message });
+    }
   }
-});
+);
+
+
+
+
+
 
 // Route to fetch all courses
 router.get('/', async (req, res) => {
@@ -159,10 +174,10 @@ router.get('/', async (req, res) => {
 });
 
 // Route to fetch a specific course by its ID
-router.get('/:courseId', async (req, res) => {
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
   try {
-    const { courseId } = req.params;
-    const course = await Course.findById(courseId);
+    const course = await Course.findById(id);
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }

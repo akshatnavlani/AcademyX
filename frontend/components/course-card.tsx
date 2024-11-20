@@ -4,28 +4,52 @@ import { Avatar } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+const NEXT_URI = "http://localhost:5000/api/courses";
 interface CourseCardProps {
   id: string;
+}
+
+interface Instructor {
+  name: string;
+  avatar: string;
+}
+
+interface Course {
   title: string;
   thumbnail: string;
   tags: string[];
   completion?: number; // optional completion percentage
   rating?: number; // optional course rating
-  instructor: {
-    name: string;
-    avatar: string;
-  };
+  instructor: Instructor;
 }
 
-export function CourseCard({
-  id,
-  title,
-  thumbnail,
-  tags,
-  completion,
-  rating,
-  instructor,
-}: CourseCardProps) {
+export function CourseCard({ id }: CourseCardProps) {
+  const [course, setCourse] = useState<Course | null>(null);
+
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const response = await fetch(`${NEXT_URI}/${id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch course");
+        }
+        const courseData = await response.json();
+        setCourse(courseData);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCourse();
+  }, [id]);
+
+  if (!course) {
+    return <div>Loading...</div>; // Placeholder while loading
+  }
+
+  const { title, thumbnail, tags, instructor, rating, completion } = course;
+
   return (
     <Link href={`/courses/${id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -34,6 +58,8 @@ export function CourseCard({
             src={thumbnail}
             alt={title}
             className="object-cover w-full h-full"
+            width={500}  // Specify width and height for optimization
+            height={300} // Specify height for optimization
           />
           {completion !== undefined && (
             <div className="absolute bottom-0 left-0 right-0 p-2 bg-background/90">
@@ -48,7 +74,12 @@ export function CourseCard({
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <Avatar className="w-8 h-8">
-              <img src={instructor.avatar} alt={instructor.name} />
+              <Image 
+                src={instructor.avatar || "/default-avatar.png"} 
+                alt={instructor.name} 
+                width={32}  // Specify width for default avatar
+                height={32} // Specify height for default avatar
+              />
             </Avatar>
             <div className="flex-1">
               <h3 className="font-semibold line-clamp-2">{title}</h3>
