@@ -39,15 +39,15 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-3">Product</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Features</Link></li>
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Resources</Link></li>
+              <li><Link href="/feature" className="text-muted-foreground hover:text-primary">Features</Link></li>
+              <li><Link href="/resources" className="text-muted-foreground hover:text-primary">Resources</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-3">About</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Blog</Link></li>
-              <li><Link href="#" className="text-muted-foreground hover:text-primary">Support</Link></li>
+              <li><Link href="/blog" className="text-muted-foreground hover:text-primary">Blog</Link></li>
+              <li><Link href="/support" className="text-muted-foreground hover:text-primary">Support</Link></li>
             </ul>
           </div>
           <div>

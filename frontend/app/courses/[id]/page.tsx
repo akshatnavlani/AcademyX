@@ -1,69 +1,170 @@
-"use client"
+"use client";
 
-import { useState } from 'react'
-import { Header } from '@/components/header-loggedin'
-import { Footer } from '@/components/footer'
-import { Button } from '@/components/ui/button'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Play, ChevronDown, Star, ImageIcon, Lock } from 'lucide-react'
-import Image from 'next/image'
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { Header } from "@/components/header-loggedin";
+import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Play, Star, ImageIcon, Lock, Edit } from "lucide-react";
+import Image from "next/image";
+import { toast } from "@/hooks/use-toast";
+import { auth } from "@/app/firebase/config";
+import Link from "next/link";
+import ReactPlayer from "react-player"; // Import react-player
 
-// Mock course data (replace with actual data fetching)
-const courseData = {
-  id: '1',
-  title: 'COURSE TITLE',
-  description: 'COURSE DESCRIPTION: LOREM IPSUM DOLOR SIT AMET CONSECTETUR ADIPISICING ELIT. ID, QUIS EIUS NON DOLORE QUAE TEMPORA VEL SED SUNT DEBITIS, VOLUPTATEM ET RATIONE REM ADIPISCI PERSPICIATIS BLANDITIIS CONSECTETUR EA',
-  thumbnail: '/placeholder.svg?height=400&width=800',
-  rating: 4.5,
-  tags: ['TAG X', 'TAG Y', 'TAG Z', 'TAG A', 'TAG B'],
-  chapters: [
-    {
-      title: 'Chapter 1',
-      topics: [
-        {
-          title: 'Introduction',
-          description: 'Topic description',
-          videoUrl: 'https://youtu.be/5gwLMa5TFbU?si=79zBtY7fnpylPHqW',
-          videoThumbnail: '/placeholder.svg?height=200&width=400'
-        },
-        {
-          title: 'Getting Started',
-          description: 'Topic description',
-          videoUrl: 'https://youtu.be/5gwLMa5TFbU?si=79zBtY7fnpylPHqW',
-          videoThumbnail: null
-        },
-      ],
-    },
-    {
-      title: 'Chapter 2',
-      topics: [
-        {
-          title: 'Advanced Concepts',
-          description: 'Topic description',
-          videoUrl: 'https://example.com/video3.mp4',
-          videoThumbnail: '/placeholder.svg?height=200&width=400'
-        },
-      ],
-    },
-  ],
-  isBought: false, // This would be determined by your authentication and purchase system
+const NEXT_URI = "http://localhost:5000/api/courses";
+interface Topic {
+  title: string;
+  description: string;
+  videoUrl: string;
+  videoThumbnail: string | null;
+}
+
+interface Chapter {
+  title: string;
+  topics: Topic[];
+}
+
+interface Instructor {
+  name: string;
+  avatar: string;
+  email: string;
+}
+
+interface CourseData {
+  _id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  rating: number;
+  tags: string[];
+  chapters: Chapter[];
+  isBought: boolean;
+  instructor: Instructor;
+  get_points: number;
+}
+
+interface UserData {
+  username: string;
+  email: string;
+  account_type: string;
+  learner_points: number;
+  level: string;
+  achievements: string[];
+  courses_bought: string[];
 }
 
 export default function CourseView() {
+  const { id } = useParams() as { id: string }
+  // const router = useRouter()
+  const [courseData, setCourseData] = useState<CourseData | null>(null)
+  const [userData, setUserData] = useState<UserData | null>(null)
   const [currentVideo, setCurrentVideo] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userEmail = auth.currentUser?.email
+        console.log(userEmail)
+        if (!userEmail) {
+          throw new Error('User not authenticated')
+        }
+
+        const [courseResponse, userResponse] = await Promise.all([
+          fetch(`${NEXT_URI}/${id}`),
+          fetch(`${NEXT_URI}/user/${encodeURIComponent(userEmail)}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+        ])
+
+        if (!courseResponse.ok || !userResponse.ok) {
+          throw new Error('Failed to fetch data')
+        }
+
+        const courseData = await courseResponse.json()
+        const userData = await userResponse.json()
+
+        setCourseData(courseData)
+        setUserData(userData)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id])
 
   const playVideo = (videoUrl: string) => {
-    if (courseData.isBought || videoUrl === courseData.chapters[0].topics[0].videoUrl) {
-      setCurrentVideo(videoUrl)
+    if (courseData?.isBought || videoUrl === courseData?.chapters[0].topics[0].videoUrl) {
+      setCurrentVideo(videoUrl);
     } else {
-      alert("Please purchase the course to access this video.")
+      toast({
+        title: "Course not purchased",
+        description: "Please purchase the course to access this video.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const buyCourse = async () => {
+    if (!courseData || !userData) return
+
+    try {
+      const response = await fetch('/api/courses/buy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          courseId: courseData._id, 
+          userEmail: userData.email 
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to purchase course')
+      }
+
+      // const data = await response.json()
+      toast({
+        title: "Course purchased",
+        description: "You now have access to all course content.",
+      })
+      
+      // Update the courseData to reflect that it's been bought
+      setCourseData(prevData => prevData ? { ...prevData, isBought: true } : null)
+
+      // Update user data
+      setUserData(prevData => {
+        if (!prevData) return null
+        return {
+          ...prevData,
+          learner_points: prevData.learner_points + (courseData.get_points || 0),
+          courses_bought: [...prevData.courses_bought, courseData._id]
+        }
+      })
+    } catch (err) {
+      toast({
+        title: "Purchase failed",
+        description: err instanceof Error ? err.message : 'An error occurred',
+        variant: "destructive",
+      })
     }
   }
+
+  const isCreator = userData?.email === courseData?.instructor.email
+
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
+  if (!courseData || !userData) return <div>No data available</div>
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -71,7 +172,7 @@ export default function CourseView() {
       <main className="flex-grow">
         <div className="w-full aspect-[2/1] bg-muted relative group cursor-pointer" onClick={() => playVideo(courseData.chapters[0].topics[0].videoUrl)}>
           <Image
-            src={courseData.thumbnail}
+            src={`/thumbnails/${courseData.thumbnail}`}
             alt={courseData.title}
             layout="fill"
             objectFit="cover"
@@ -85,7 +186,17 @@ export default function CourseView() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-muted" />
+              <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
+                {courseData.instructor && courseData.instructor.avatar && (
+                  <Image
+                    src={courseData.instructor.avatar}
+                    alt={courseData.instructor.name}
+                    width={48}
+                    height={48}
+                    className="rounded-full"
+                  />
+                )}
+              </div>
               <div>
                 <h1 className="text-2xl font-bold mb-2">{courseData.title}</h1>
                 <div className="flex gap-1 mb-4">
@@ -101,13 +212,29 @@ export default function CourseView() {
                       }`}
                     />
                   ))}
-                  <span className="ml-2 text-sm text-muted-foreground">{courseData.rating.toFixed(1)}</span>
+                  <span className="ml-2 text-sm text-muted-foreground">
+  {typeof courseData.rating === 'number' ? courseData.rating.toFixed(1) : 'N/A'}
+</span>
+
                 </div>
               </div>
             </div>
-            {!courseData.isBought && (
-              <Button size="lg">Buy Course</Button>
-            )}
+            <div className="flex flex-col items-end">
+              {!courseData.isBought && (
+                <Button size="lg" onClick={buyCourse}>Buy Course</Button>
+              )}
+              <p className="mt-2 text-sm text-muted-foreground">
+                Earn {courseData.get_points} learner points
+              </p>
+              {isCreator && (
+                <Link href={`/courses/${id}/edit`}>
+                  <Button variant="outline" className="mt-2">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit Course
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className="mb-6">
@@ -152,14 +279,14 @@ export default function CourseView() {
                         >
                           {topic.videoThumbnail ? (
                             <Image
-                              src={topic.videoThumbnail}
+                            src={`/thumbnails/${topic.videoThumbnail || 'placeholder.svg'}`}
                               alt={topic.title}
                               layout="fill"
                               objectFit="cover"
                             />
                           ) : courseData.thumbnail ? (
                             <Image
-                              src={courseData.thumbnail}
+                            src={`/thumbnails/${courseData.thumbnail || 'placeholder.svg'}`}
                               alt="Course Thumbnail"
                               layout="fill"
                               objectFit="cover"
@@ -193,14 +320,17 @@ export default function CourseView() {
             <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50">
               <div className="fixed inset-[50%] w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] p-6">
                 <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                  <video
-                    src={currentVideo}
+                  <ReactPlayer
+                    url={currentVideo}
                     controls
-                    autoPlay
-                    className="w-full h-full"
-                  >
-                    Your browser does not support the video tag.
-                  </video>
+                    // fullscreen
+                    playing
+                    
+                width="100%"
+                height="100%"
+
+                  />
+
                 </div>
                 <Button
                   variant="outline"
@@ -218,3 +348,4 @@ export default function CourseView() {
     </div>
   )
 }
+

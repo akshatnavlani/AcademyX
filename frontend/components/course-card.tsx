@@ -1,10 +1,11 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+// import { AvatarImage } from "@radix-ui/react-avatar";
 const NEXT_URI = "http://localhost:5000/api/courses";
 interface CourseCardProps {
   id: string;
@@ -55,7 +56,7 @@ export function CourseCard({ id }: CourseCardProps) {
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="aspect-video relative bg-muted">
           <Image
-            src={thumbnail}
+            src={`/thumbnails/${thumbnail || 'placeholder.svg'}`}
             alt={title}
             className="object-cover w-full h-full"
             width={500}  // Specify width and height for optimization
@@ -74,12 +75,7 @@ export function CourseCard({ id }: CourseCardProps) {
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <Avatar className="w-8 h-8">
-              <Image 
-                src={instructor.avatar || "/default-avatar.png"} 
-                alt={instructor.name} 
-                width={32}  // Specify width for default avatar
-                height={32} // Specify height for default avatar
-              />
+              <AvatarFallback>A</AvatarFallback>
             </Avatar>
             <div className="flex-1">
               <h3 className="font-semibold line-clamp-2">{title}</h3>
