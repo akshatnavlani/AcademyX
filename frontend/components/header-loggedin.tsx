@@ -14,6 +14,7 @@ import { auth } from "@/app/firebase/config";
 import { onAuthStateChanged, signOut} from "firebase/auth";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -110,17 +111,9 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
-                {user?.avatar_url ? (
-                  <Image
-                    src={user.avatar_url}
-                    alt="User Avatar"
-                    className="rounded-full"
-                    width={24}
-                    height={24}
-                  />
-                ) : (
-                  <User className="h-5 w-5" />
-                )}
+                <Avatar>
+                  <AvatarFallback>AN</AvatarFallback>
+                </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

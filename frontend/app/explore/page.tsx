@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from "react";
 import { CourseCard } from "@/components/course-card"; // Assuming CourseCard is in the components folder
+import { Header } from "@/components/header-loggedin";
+import { Footer } from "@/components/footer";
 
 interface Course {
   _id: string;
@@ -44,6 +46,7 @@ export default function ExplorePage() {
 
   return (
     <div className="container mx-auto p-4">
+      <Header/>
       <h1 className="text-2xl font-semibold mb-6">Explore Courses</h1>
       <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {courses.map((course) => (
@@ -52,6 +55,7 @@ export default function ExplorePage() {
           </div>
         ))}
       </div>
+      <Footer/>
     </div>
   );
 }

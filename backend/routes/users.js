@@ -101,9 +101,7 @@ router.get('/recommended', async (req, res) => {
 
 // Existing routes...
 
-router.post(
-  '/create',
-  upload.single('thumbnail'),
+router.post('/create',upload.single('thumbnail'),
   [
     body('email').isEmail().withMessage('Valid email is required'),
     body('title').notEmpty().withMessage('Course title is required'),
